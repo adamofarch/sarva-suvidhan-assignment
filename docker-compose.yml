@@ -1,0 +1,47 @@
+x-railsathi: &railsathi
+  build:
+    context: .
+    dockerfile: Dockerfile
+    args:
+      DOCKER_BUILDKIT: 1
+  volumes:
+    - .:/app
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  env_file:
+    - .env
+
+services:
+  railsathi-fastapi:
+    container_name: railsathi-fastapi
+    <<: *railsathi
+    restart: unless-stopped
+    ports:
+      - "5002:5002"
+    depends_on:
+      - postgres_database
+    networks:
+      - railsathi-network
+
+  postgres_database:
+    container_name: railsathi-db
+    image: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    ports:
+      - "5432:5432"
+
+    env_file:
+      - .env
+
+    networks:
+      - railsathi-network
+
+networks:
+  railsathi-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
